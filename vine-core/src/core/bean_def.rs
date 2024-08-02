@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use log::trace;
 
-use crate::context::Context;
+use crate::context::context::Context;
 use crate::core::{DynBean, Error};
 use crate::core::ty::Type;
 
