@@ -37,7 +37,7 @@ impl Context {
     }
 
     pub fn add_context(&self, context: Context) {
-        // TODO: check override, logging
+        // TODO: missed feature (context allow overrides) - if override use warn log. Also think about context property to allow overrides
         self.inner.contexts.insert(context.name().to_string(), Arc::new(context));
     }
 
@@ -85,7 +85,7 @@ impl Context {
                 self.get_bean::<T>(bean_def.name())
             },
             _ => {
-                todo!()
+                todo!("missed feature(primary beans) - add primary to BeanDef and use it to resolve primary bean")
             },
         }
     }
@@ -100,7 +100,7 @@ impl Context {
     }
 
     pub async fn init_beans(&self) -> Result<(), Error> {
-        // TODO:
+        // TODO: missed feature (init beans) - add list of init functions to Context, run these functions here
         Ok(())
     }
 }
@@ -131,11 +131,11 @@ impl InnerContext {
         return None;
     }
 
-    // TODO: use context to check conditional BeanDefs
+    // TODO: missed feature (conditional beans) - use context to check conditional BeanDefs
     fn get_bean_defs_within_context(&self, ctx: &Context) -> Vec<Arc<BeanDef>> {
         let mut bean_defs = Vec::new();
         let mut ctx_defs = self.bean_defs.iter()
-            // TODO: .filter(check conditions)
+            // filter conditional beans here
             .map(|def| def.value().clone())
             .collect();
 
@@ -159,7 +159,7 @@ impl InnerContext {
 mod tests {
     use std::sync::Arc;
 
-    use crate::context::Context;
+    use crate::context::context::Context;
     use crate::core::bean_def::BeanDef;
     use crate::core::Error;
     use crate::core::ty::Type;

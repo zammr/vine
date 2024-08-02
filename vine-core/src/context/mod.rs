@@ -1,3 +1,2 @@
-mod context;
-
-pub use crate::context::context::Context as Context;
+pub mod context;
+pub mod auto_register_context;
