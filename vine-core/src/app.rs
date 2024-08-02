@@ -1,8 +1,5 @@
 use std::sync::Arc;
-
-use async_trait::async_trait;
 use log::debug;
-
 use crate::context::context::Context;
 use crate::core::Error;
 use crate::core::runner::Runner;
@@ -29,7 +26,7 @@ impl App {
     }
 }
 
-#[async_trait]
+#[async_trait::async_trait]
 impl Runner for App {
     async fn run(&self) -> Result<(), Error> {
         let mut runners = self.context.get_beans::<dyn Runner + Send + Sync>()?;

@@ -18,6 +18,6 @@ pub async fn vine_run() -> Result<(), Error> {
     trace!("Setup - add {} to App", &context);
     app.add_context(context);
 
-    trace!("Setup - run App", &context);
+    trace!("Setup - run App");
     app.run().await
 }
