@@ -7,12 +7,16 @@ license = "Apache-2.0"
 description = """
 Vine is rust framework inspired by Spring Boot
 """
+
 [features]
-full=[
+default = [
     "vine-core",
     "vine-macros"
 ]
 
 [dependencies]
-vine-core = { version = "0.1.1", optional = true }
-vine-macros = { version = "0.1.1", optional = true }
+vine-core = { path = "../vine-core", version = "0.1.1", optional = true }
+vine-macros = { path = "../vine-macros", version = "0.1.1", optional = true }
+
+async-trait = { version = "0.1.81" }
+linkme = { version = "0.3.27" }
