@@ -15,8 +15,10 @@ default = [
 ]
 
 [dependencies]
-vine-core = { path = "../vine-core", version = "0.1.1", optional = true }
-vine-macros = { path = "../vine-macros", version = "0.1.1", optional = true }
+vine-core = { version = "0.1.1", optional = true }
+vine-macros = { version = "0.1.1", optional = true }
 
+lazy_static = { version = "1.5.0" }
 async-trait = { version = "0.1.81" }
-linkme = { version = "0.3.27" }
+linkme = { version = "0.3.27"}
+linkme-impl = { version = "0.3.27" }
