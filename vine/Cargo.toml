@@ -1,11 +1,18 @@
 [package]
 name = "vine"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 license = "Apache-2.0"
 description = """
 Vine is rust framework inspired by Spring Boot
 """
+[features]
+full=[
+    "vine-core",
+    "vine-macros"
+]
 
 [dependencies]
+vine-core = { version = "0.1.1", optional = true }
+vine-macros = { version = "0.1.1", optional = true }
