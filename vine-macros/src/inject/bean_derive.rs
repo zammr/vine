@@ -1,8 +1,7 @@
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
-use syn::{Ident, DeriveInput, DataStruct, parse_macro_input, LitStr, Data, Type, PathArguments, GenericArgument, TypePath, Path};
-use syn::punctuated::Punctuated;
+use syn::{Ident, DeriveInput, DataStruct, parse_macro_input, LitStr, Data, Type, PathArguments, GenericArgument};
 
 pub fn generate_setup_fn_for_bean_derive(input: TokenStream) -> TokenStream {
     let DeriveInput {
