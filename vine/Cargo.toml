@@ -1,6 +1,6 @@
 [package]
 name = "vine"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 
 license = "Apache-2.0"
@@ -16,7 +16,7 @@ default = [
 
 [dependencies]
 vine-core = { version = "0.1.1", optional = true }
-vine-macros = { version = "0.1.1", optional = true }
+vine-macros = { version = "0.1.2", optional = true }
 
 lazy_static = { version = "1.5.0" }
 async-trait = { version = "0.1.81" }
