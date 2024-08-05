@@ -29,9 +29,9 @@ pub fn generate_setup_fn_for_bean(_attr: TokenStream, item: TokenStream) -> Toke
     let bean_name = LitStr::new(&fn_name_str, Span::call_site());
 
     let extended = quote!(
-        #[linkme::distributed_slice(vine::vine_core::context::SETUP)]
-        pub static #setup_ident: fn(&vine::vine_core::Context) -> Result<(), vine::vine_core::Error> = |ctx| {
-            let ty = vine::vine_core::core::r#type::Type::of::<#class>();
+        #[linkme::distributed_slice(vine::vine_core::context::auto_register_context::SETUP)]
+        pub static #setup_ident: fn(&vine::vine_core::context::context::Context) -> Result<(), vine::vine_core::core::Error> = |ctx| {
+            let ty = vine::vine_core::core::ty::Type::of::<#class>();
             ty.add_downcast::<#class>(|b| Ok(std::sync::Arc::downcast::<#class>(b)?));
 
             let bean_def = vine::vine_core::core::bean_def::BeanDef::builder()
