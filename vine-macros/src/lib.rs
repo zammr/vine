@@ -1,14 +1,25 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
+use proc_macro::TokenStream;
+
+use crate::inject::bean::generate_setup_fn_for_bean;
+use crate::inject::bean_derive::generate_setup_fn_for_bean_derive;
+use crate::inject::injectable::generate_setup_fn_for_injectable;
+
+mod inject;
+
+/// TODO: add documentation
+#[proc_macro_attribute]
+pub fn bean(attr: TokenStream, item: TokenStream) -> TokenStream {
+    generate_setup_fn_for_bean(attr, item)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+/// TODO: add documentation
+#[proc_macro_derive(Bean)]
+pub fn bean_derive(input: TokenStream) -> TokenStream {
+    generate_setup_fn_for_bean_derive(input)
+}
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+/// TODO: add documentation
+#[proc_macro_attribute]
+pub fn injectable(attr: TokenStream, item: TokenStream) -> TokenStream {
+    generate_setup_fn_for_injectable(attr, item)
 }
