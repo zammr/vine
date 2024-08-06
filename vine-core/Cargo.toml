@@ -1,6 +1,6 @@
 [package]
 name = "vine-core"
-version = "0.1.1"
+version = "0.1.3"
 edition = "2021"
 
 license = "Apache-2.0"
@@ -11,7 +11,10 @@ Vine Core implement core concepts of vine framework.
 [dependencies]
 log = { version = "0.4.22" }
 dashmap = { version = "6.0.1" }
+
 lazy_static = { version = "1.5.0" }
 async-trait = { version = "0.1.81" }
 linkme = { version = "0.3.27"}
-linkme-impl = { version = "0.3.27" }
+
+log4rs = { version = "1.3.0", features = ["console_writer"]}
+config = { version = "0.14.0", features = ["yaml"] }
