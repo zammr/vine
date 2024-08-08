@@ -1,19 +1,15 @@
-use log4rs::append::console::ConsoleAppender;
-use log4rs::Config;
-use log4rs::config::{Appender, Root};
-use log::LevelFilter;
-
+use log4rs::config::RawConfig;
+use crate::context::context::Context;
 use crate::core::Error;
 
-pub fn init_logger() -> Result<(), Error> {
-    let stdout = ConsoleAppender::builder().build();
+pub fn init_logger(config: &Context) -> Result<(), Error> {
+    let config = config.get_bean::<config::Config>("config")?;
+    let raw_config = config.get::<RawConfig>("logging")
+        .unwrap_or_else(|_| RawConfig::default());
 
-    let config = Config::builder()
-        .appender(Appender::builder().build("stdout", Box::new(stdout)))
-        .build(Root::builder().appender("stdout").build(LevelFilter::Trace))
-        .unwrap();
-
-    log4rs::init_config(config).unwrap();
-
-    Ok(())
+    log4rs::init_raw_config(raw_config).map_err(|_e| {
+        Error::from(r#"
+        TODO: doc - logger init error
+        "#)
+    })
 }

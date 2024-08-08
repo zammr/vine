@@ -1,3 +1,5 @@
+mod property_resolver;
+
 use std::path::Path;
 use std::sync::Arc;
 use config::{Config, Environment, File};
@@ -6,14 +8,13 @@ use crate::core::bean_def::BeanDef;
 use crate::core::Error;
 use crate::core::ty::Type;
 
-pub trait PropertyResolver {
-    fn get_string(&self, key: &str) -> Result<String, Error>;
-}
+pub use property_resolver::PropertyResolver as PropertyResolver;
 
 pub fn get_config_context() -> Result<Context, Error> {
     let config_context = Context::new("config");
 
     let ty = Type::of::<Config>();
+    ty.add_downcast::<Config>(|b| Ok(Arc::downcast::<Config>(b)?));
     ty.add_downcast::<dyn PropertyResolver + Send + Sync>(|b| Ok(Arc::downcast::<Config>(b)?));
 
     let mut config_builder = Config::builder();
@@ -31,13 +32,4 @@ pub fn get_config_context() -> Result<Context, Error> {
         .build())?;
 
     Ok(config_context)
-}
-
-impl PropertyResolver for Config {
-
-    fn get_string(&self, key: &str) -> Result<String, Error> {
-        self.get_string(key).map_err(|_error| {
-            Error::from("failed to resolve property")
-        })
-    }
 }
