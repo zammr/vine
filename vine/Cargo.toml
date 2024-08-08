@@ -1,6 +1,6 @@
 [package]
 name = "vine"
-version = "0.1.3-dev.1"
+version = "0.1.4-dev.1"
 edition = "2021"
 
 license = "Apache-2.0"
@@ -15,5 +15,5 @@ default = [
 ]
 
 [dependencies]
-vine-core = { version = "0.1.3", optional = true }
-vine-macros = { version = "0.1.2", optional = true }
+vine-core = { version = "0.1.4-dev.1", optional = true }
+vine-macros = { version = "0.1.4-dev.1", optional = true }
