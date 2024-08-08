@@ -2,60 +2,58 @@ use proc_macro::TokenStream;
 
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use syn::{FnArg, GenericArgument, ItemFn, LitStr, parse_macro_input, PathArguments, ReturnType, Type};
+use syn::{FnArg, GenericArgument, ItemFn, LitStr, parse_macro_input, parse_quote, PathArguments, PatType, ReturnType, Signature, Type};
+use crate::inject::bean_field::BeanField;
 
-pub fn generate_setup_fn_for_bean(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    let item_fn = parse_macro_input!(item as ItemFn);
-    let fn_name = &item_fn.sig.ident;
-    let resolved_fn_args: Vec<_> = item_fn.sig.inputs.iter().map(|fn_arg|{
-        let FnArg::Typed(type_afn_arg) = fn_arg else { panic!("cannot resolve arg") };
-        let Type::Path(arc_ty) = type_afn_arg.ty.as_ref() else { panic!("cannot resolve arg Type") };
-        let Some(arc_ty) = arc_ty.path.segments.first() else { panic!("cannot resolve arg Type") };
-        let PathArguments::AngleBracketed(arc_ty_args) = &arc_ty.arguments else { panic!("cannot resolve arg Type") };
-        let Some(GenericArgument::Type(ty)) = arc_ty_args.args.first() else { panic!("cannot resolve arg Type") };
+pub fn generate_setup_fn_for_bean(_attr: TokenStream, input: TokenStream) -> TokenStream {
+    let ItemFn {
+        vis,
+        sig: Signature { output, ident, inputs, .. },
+        block,
+        ..
+    } = parse_macro_input!(input as ItemFn);
 
-        quote!(ctx.get_primary_bean::<#ty>()?,)
+    let args: Vec<_> = inputs.iter().map(|arg| {
+        let FnArg::Typed(PatType { pat, ty, .. }) = arg else { panic!("unsupported FnArg"); };
+        return quote!(#pat: #ty)
     }).collect();
 
+    let resolved_fn_args: Vec<_> = inputs.iter().map(|fn_arg| match parse_quote!(#fn_arg) {
+        BeanField::Bean(_, ty, name) => quote!(ctx.get_bean::<#ty>(#name)?,),
+        BeanField::PrimaryBean(_, ty) => quote!(ctx.get_primary_bean::<#ty>()?,),
+        BeanField::Beans(_, ty) => quote!(ctx.get_beans::<#ty>()?,),
+        BeanField::Value(_, _ty, value) => quote!({
+            let config = ctx.get_bean::<dyn vine::vine_core::config::PropertyResolver + Send + Sync>("config")?;
+            config.compute_template_value(#value)?
+        },),
+    }).collect();
 
-    let fn_name_str = fn_name.to_string();
-    let setup_ident_name = format!("SETUP_{}", fn_name_str.to_uppercase());
-    let setup_ident = Ident::new(&setup_ident_name, Span::call_site());
-
-    // TODO: make many options
-    let class = get_create_fn_output(&item_fn.sig.output);
-    // let ret = quote!(Ok(b));
-
+    let fn_name_str = ident.to_string();
     let bean_name = LitStr::new(&fn_name_str, Span::call_site());
 
+    let setup_ident = format!("SETUP_{}", fn_name_str.to_uppercase());
+    let setup_ident = Ident::new(&setup_ident, Span::call_site());
+
+    let ty = get_create_fn_output(&output);
     let extended = quote!(
         #[linkme::distributed_slice(vine::vine_core::context::auto_register_context::SETUP)]
         pub static #setup_ident: fn(&vine::vine_core::context::context::Context) -> Result<(), vine::vine_core::core::Error> = |ctx| {
-            let ty = vine::vine_core::core::ty::Type::of::<#class>();
-            ty.add_downcast::<#class>(|b| Ok(std::sync::Arc::downcast::<#class>(b)?));
+            let ty = vine::vine_core::core::ty::Type::of::<#ty>();
+            ty.add_downcast::<#ty>(|b| Ok(std::sync::Arc::downcast::<#ty>(b)?));
 
             let bean_def = vine::vine_core::core::bean_def::BeanDef::builder()
                 .name(#bean_name)
                 .ty(ty)
-                .get(std::sync::Arc::new(|ctx| Ok(#fn_name(#(#resolved_fn_args)*))))
+                .get(std::sync::Arc::new(|ctx| Ok(#ident(#(#resolved_fn_args)*))))
                 .build();
             ctx.register(bean_def)
         };
 
-        #item_fn
+        #vis fn #ident (#(#args),*) #output { #block }
     );
-
-    println!("\n\n\n {} \n\n\n", extended);
 
     extended.into()
 }
-
-// enum CreateBeanType {
-//     Type(Ident),
-//     ResultType(Ident),
-//     ArcType(Ident),
-//     ResultArcType(Ident),
-// }
 
 fn get_create_fn_output(return_type: &ReturnType) -> Type {
     let ReturnType::Type(_, box_type) = return_type else { panic!() };

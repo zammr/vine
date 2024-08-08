@@ -13,7 +13,7 @@ pub fn bean(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 /// TODO: add documentation
-#[proc_macro_derive(Bean)]
+#[proc_macro_derive(Bean, attributes(value, qualifier))]
 pub fn bean_derive(input: TokenStream) -> TokenStream {
     generate_setup_fn_for_bean_derive(input)
 }
