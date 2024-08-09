@@ -29,12 +29,12 @@ impl App {
 #[async_trait::async_trait]
 impl Runner for App {
     async fn run(&self) -> Result<(), Error> {
-        let mut runners = self.context.get_beans::<dyn Runner + Send + Sync>()?;
-        debug!("App - initialize {} runners", runners.len());
-
-        self.context.init_beans().await?;
+        debug!("App - initialize context");
+        self.context.init_contexts()?;
 
         // TODO: missed feature(sequential, concurrent runners) run each runner in separate thread
+        let mut runners = self.context.get_beans::<dyn Runner + Send + Sync>()?;
+
         debug!("App - sequentially run");
         while let Some(runner) = runners.pop() {
             runner.run().await?;

@@ -1,12 +1,16 @@
 use std::any::{type_name, TypeId};
+use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
+
 use dashmap::DashMap;
 use log::{debug, trace, warn};
 
 use crate::core::{DynBean, Error};
 use crate::core::bean_def::BeanDef;
 use crate::core::ty::Type;
+
+type InitContextFn = Arc<dyn Fn(&Context) -> Result<DynBean, Error> + Send + Sync>;
 
 #[derive(Clone)]
 pub struct Context {
@@ -18,6 +22,7 @@ struct InnerContext {
     beans: Arc<DashMap<String, DynBean>>,
     bean_defs: Arc<DashMap<String, Arc<BeanDef>>>,
     contexts: Arc<DashMap<String, Arc<Context>>>,
+    init_fns: DashMap<String, InitContextFn>
 }
 
 impl Context {
@@ -28,6 +33,7 @@ impl Context {
                 beans: Default::default(),
                 bean_defs: Default::default(),
                 contexts: Default::default(),
+                init_fns: Default::default(),
             })
         }
     }
@@ -39,6 +45,23 @@ impl Context {
     pub fn add_context(&self, context: Context) {
         // TODO: missed feature (context allow overrides) - if override use warn log. Also think about context property to allow overrides
         self.inner.contexts.insert(context.name().to_string(), Arc::new(context));
+    }
+
+    pub fn add_init_fn(&self, name: &str, init_fn: Arc<dyn Fn(&Context) -> Result<DynBean, Error> + Send + Sync>) {
+        // TODO: missed feature (context allow init overrides) - if override use warn log. Also think about context property to allow overrides
+        self.inner.init_fns.insert(name.to_string(), init_fn);
+    }
+
+    pub fn init_contexts(&self) -> Result<(), Error> {
+        let init_fns = self.inner.get_init_context_fns();
+
+        // TODO: missed feature (disable init function by name)
+        for (init_fn_name, init_fn) in init_fns.iter() {
+            trace!("execute init fn with name {:?}", init_fn_name);
+            init_fn(self)?;
+        }
+
+        Ok(())
     }
 
     pub fn register(&self, bean_def: impl Into<BeanDef>) -> Result<(), Error> {
@@ -98,11 +121,6 @@ impl Context {
             .map(|def| self.get_bean::<T>(def.name()))
             .collect()
     }
-
-    pub async fn init_beans(&self) -> Result<(), Error> {
-        // TODO: missed feature (init beans) - add list of init functions to Context, run these functions here
-        Ok(())
-    }
 }
 
 impl Display for Context {
@@ -152,6 +170,26 @@ impl InnerContext {
         self.get_bean_defs_within_context(ctx).into_iter()
             .filter(|def| def.ty().assignable(type_id))
             .collect()
+    }
+
+    fn get_init_context_fns(&self) -> HashMap<String, InitContextFn> {
+        let mut fns = HashMap::new();
+        for ctx in self.contexts.iter() {
+            let mut ctx_fns: Vec<_> = ctx.inner.get_init_context_fns().into_iter().collect();
+            while let Some((key, value)) = ctx_fns.pop() {
+                fns.insert(key, value);
+            }
+        }
+
+        let mut ctx_fns: Vec<_> = self.init_fns.iter()
+            .map(|item_ref| (item_ref.key().clone(), item_ref.value().clone()))
+            .collect();
+
+        while let Some((key, value)) = ctx_fns.pop() {
+            fns.insert(key, value);
+        }
+
+        return fns;
     }
 }
 
