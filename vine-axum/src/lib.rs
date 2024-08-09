@@ -62,13 +62,14 @@ pub static SETUP_WEB: fn(&Context) -> Result<(), Error> = |ctx| {
     ty.add_downcast::<Web>(|b| Ok(Arc::downcast::<Web>(b)?));
     ty.add_downcast::<dyn vine_core::core::runner::Runner + Send + Sync>(|b| Ok(Arc::downcast::<Web>(b)?));
 
-    let config = ctx.get_primary_bean::<dyn PropertyResolver + Send + Sync>()?;
-    let host = config.compute_template_value("${server.host:0.0.0.0}")?;
-    let port = config.compute_template_value("${server.port:3000}")?;
-    let web = Arc::new(Web { host, port, routes: Default::default() });
-
     ctx.register(BeanDef::builder()
         .name("web")
-        .get(Arc::new(move |_| Ok(web.clone())))
+        .get(Arc::new(move |ctx| {
+            let config = ctx.get_primary_bean::<dyn PropertyResolver + Send + Sync>()?;
+            let host = config.compute_template_value("${server.host:0.0.0.0}")?;
+            let port = config.compute_template_value("${server.port:3000}")?;
+            let web = Arc::new(Web { host, port, routes: Default::default() });
+            Ok(web.clone())
+        }))
         .build())
 };
