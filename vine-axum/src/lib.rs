@@ -64,12 +64,13 @@ pub static SETUP_WEB: fn(&Context) -> Result<(), Error> = |ctx| {
 
     ctx.register(BeanDef::builder()
         .name("web")
-        .get(Arc::new(move |ctx| {
+        .ty(ty)
+        .get(Arc::new(|ctx| {
             let config = ctx.get_primary_bean::<dyn PropertyResolver + Send + Sync>()?;
             let host = config.compute_template_value("${server.host:0.0.0.0}")?;
             let port = config.compute_template_value("${server.port:3000}")?;
             let web = Arc::new(Web { host, port, routes: Default::default() });
-            Ok(web.clone())
+            Ok(web)
         }))
         .build())
 };
