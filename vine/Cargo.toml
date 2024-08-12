@@ -1,6 +1,6 @@
 [package]
 name = "vine"
-version = "0.1.4-dev.2"
+version = "0.1.4-dev.6"
 edition = "2021"
 
 license = "Apache-2.0"
@@ -11,9 +11,13 @@ Vine is rust framework inspired by Spring Boot
 [features]
 default = [
     "vine-core",
-    "vine-macros"
+    "vine-macros",
+    "vine-axum",
+    "vine-axum-macros"
 ]
 
 [dependencies]
-vine-core = { version = "0.1.4-dev.2", optional = true }
-vine-macros = { version = "0.1.4-dev.1", optional = true }
+vine-core = { version = "0.1.4-dev.6", optional = true }
+vine-macros = { version = "0.1.4-dev.6", optional = true }
+vine-axum = { version = "0.1.4-dev.6", optional = true }
+vine-axum-macros = { version = "0.1.4-dev.6", optional = true }

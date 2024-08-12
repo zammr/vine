@@ -30,11 +30,8 @@ pub fn generate_init_fn_for_controller(_attr: TokenStream, input: ItemImpl) -> T
 
                 #(#routes)*
 
-                // TODO: fix me after core update
-                Ok(std::sync::Arc::new(()))
-            }));
-            // TODO: fix me after core update
-            Ok(())
+                Ok(())
+            }))
         };
 
         #input
