@@ -10,7 +10,7 @@ use crate::core::{DynBean, Error};
 use crate::core::bean_def::BeanDef;
 use crate::core::ty::Type;
 
-type InitContextFn = Arc<dyn Fn(&Context) -> Result<DynBean, Error> + Send + Sync>;
+type InitContextFn = Arc<dyn Fn(&Context) -> Result<(), Error> + Send + Sync>;
 
 #[derive(Clone)]
 pub struct Context {
@@ -47,9 +47,10 @@ impl Context {
         self.inner.contexts.insert(context.name().to_string(), Arc::new(context));
     }
 
-    pub fn add_init_fn(&self, name: &str, init_fn: Arc<dyn Fn(&Context) -> Result<DynBean, Error> + Send + Sync>) {
+    pub fn add_init_fn(&self, name: &str, init_fn: Arc<dyn Fn(&Context) -> Result<(), Error> + Send + Sync>) -> Result<(), Error>{
         // TODO: missed feature (context allow init overrides) - if override use warn log. Also think about context property to allow overrides
         self.inner.init_fns.insert(name.to_string(), init_fn);
+        Ok(())
     }
 
     pub fn init_contexts(&self) -> Result<(), Error> {
