@@ -1,6 +1,6 @@
 [package]
 name = "vine"
-version = "0.1.4-dev.6"
+version = "0.1.4-dev.7"
 edition = "2021"
 
 license = "Apache-2.0"
@@ -17,7 +17,7 @@ default = [
 ]
 
 [dependencies]
-vine-core = { version = "0.1.4-dev.6", optional = true }
+vine-core = { version = "0.1.4-dev.7", optional = true }
 vine-macros = { version = "0.1.4-dev.6", optional = true }
 vine-axum = { version = "0.1.4-dev.6", optional = true }
 vine-axum-macros = { version = "0.1.4-dev.6", optional = true }

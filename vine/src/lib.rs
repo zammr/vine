@@ -1,3 +1,5 @@
+pub use vine_core::create_app as create_app;
+
 pub use vine_core;
 pub use vine_macros::*;
 
