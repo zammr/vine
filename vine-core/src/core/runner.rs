@@ -19,7 +19,8 @@ pub trait Runner {
     fn runtime(&self, _config: Arc<Config>) -> Result<Runtime, Error> {
         debug!("create tokio Runtime for {} runner", self.name());
         tokio::runtime::Builder::new_multi_thread()
-            .thread_name(self.name())
+            .thread_name(self.name().to_lowercase())
+            .enable_all()
             .build()
             .map_err(|_e| Error::from(format!("cannot initialize runtime for runner {}", self.name())))
     }
