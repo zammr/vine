@@ -44,6 +44,7 @@ impl Service for ServiceImpl {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    vine::create_app().run().await
+    vine::create_app()?
+        .exec().await
 }
 ```
