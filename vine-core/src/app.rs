@@ -58,11 +58,11 @@ impl App {
 
         let mut errors = Vec::new();
         while let Some(runner_result) = runner_results.pop() {
-            let (name, runtime, join_handle) = runner_result.await.map_err(|_join_error| {
+            let (name, _runtime, join_handle) = runner_result.await.map_err(|_join_error| {
                Error::from("failed to start runner")
             })?;
 
-            let result = runtime.block_on(async move { join_handle.await }).map_err(|_join_error| {
+            let result = join_handle.await.map_err(|_join_error| {
                 Error::from(format!("failed to execute runner {}", &name))
             })?;
 
