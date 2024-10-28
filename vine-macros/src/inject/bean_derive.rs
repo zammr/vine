@@ -29,11 +29,10 @@ pub fn generate_setup_fn_for_bean_derive(input: TokenStream) -> TokenStream {
     let bean_name = LitStr::new(&bean_name, Span::call_site());
 
     let output = quote! {
-        #[linkme::distributed_slice(vine::vine_core::context::auto_register_context::SETUP)]
+        #[vine::distributed_slice(vine::vine_core::context::auto_register_context::SETUP)]
         pub static #setup_ident: fn(&vine::vine_core::context::context::Context) -> Result<(), vine::vine_core::core::Error> = |ctx| {
             let ty = vine::vine_core::core::ty::Type::of::<#ident>();
-            ty.add_downcast::<#ident>(|b| Ok(std::sync::Arc::downcast::<#ident>(b)?));
-
+            ty.add_downcast::<#ident>(std::sync::Arc::downcast::<#ident>);
             let bean_def = vine::vine_core::core::bean_def::BeanDef::builder()
                 .name(#bean_name)
                 .ty(ty)

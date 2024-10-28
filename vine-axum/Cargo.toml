@@ -1,6 +1,6 @@
 [package]
 name = "vine-axum"
-version = "0.1.4-dev.6"
+version = "0.1.4"
 edition = "2021"
 
 license = "Apache-2.0"
@@ -10,7 +10,7 @@ vine-axum is module which helps with integration of axum to vine framework
 
 [dependencies]
 log = { version = "0.4.22" }
-vine-core = { version = "0.1.4-dev.2" }
+vine-core = { version = "0.1.4" }
 linkme = { version = "0.3.27"}
 
 axum = "0.7.5"

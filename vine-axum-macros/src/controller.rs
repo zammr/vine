@@ -22,7 +22,7 @@ pub fn generate_init_fn_for_controller(_attr: TokenStream, input: ItemImpl) -> T
     let controller = LitStr::new(ty_name.as_str(), Span::call_site());
     let setup_ident = Ident::new(format!("SETUP_INIT_FN_{}_CONTROLLER", ty_name).as_str(), Span::call_site());
     let extended = quote!(
-        #[linkme::distributed_slice(#vine_setup)]
+        #[vine::distributed_slice(#vine_setup)]
         pub static #setup_ident: fn(&#vine_context) -> Result<(), #vine_error> = |ctx| {
             ctx.add_init_fn(#controller, std::sync::Arc::new(|ctx| {
                 let web = ctx.get_primary_bean::<#vine_web>()?;

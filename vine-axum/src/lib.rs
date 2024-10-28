@@ -16,6 +16,7 @@ pub struct Web {
     host: String,
     port: String,
     routes: DashMap<String, Vec<MethodRouter>>,
+    layers: DashMap<i32, Arc<dyn Layer + Send + Sync + 'static>>,
 }
 
 impl Web {
@@ -34,6 +35,7 @@ impl vine_core::core::runner::Runner for Web {
         trace!("register endpoints");
         let router = {
             let mut router = Router::new();
+            // register endpoints
             for route in &self.routes {
                 let method_router = route.value().clone().into_iter().reduce(|acc, h| acc.merge(h));
                 if let Some(method_router) = method_router {
@@ -41,6 +43,19 @@ impl vine_core::core::runner::Runner for Web {
                     router = router.route(route.key(), method_router);
                 }
             }
+
+            let s = self.layers.iter().map(|(k, l)| k).collect();
+            
+            // register layers
+            let mut sorted_layers: Vec<_> = self.layers.iter().map(|(k, l)| (k.clone(), l.clone())).collect();
+            sorted_layers.sort_by_key(|&(key, _)| key);
+        
+
+
+            for (index, layer) in &self.layers.iter() {
+                trace!("register layer: {}", layer.key());
+            }
+            router = router.layer();
             router
         };
 

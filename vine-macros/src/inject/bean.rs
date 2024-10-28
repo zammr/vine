@@ -36,7 +36,7 @@ pub fn generate_setup_fn_for_bean(_attr: TokenStream, input: TokenStream) -> Tok
 
     let ty = get_create_fn_output(&output);
     let extended = quote!(
-        #[linkme::distributed_slice(vine::vine_core::context::auto_register_context::SETUP)]
+        #[vine::distributed_slice(vine::vine_core::context::auto_register_context::SETUP)]
         pub static #setup_ident: fn(&vine::vine_core::context::context::Context) -> Result<(), vine::vine_core::core::Error> = |ctx| {
             let ty = vine::vine_core::core::ty::Type::of::<#ty>();
             ty.add_downcast::<#ty>(|b| Ok(std::sync::Arc::downcast::<#ty>(b)?));
