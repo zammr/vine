@@ -11,7 +11,7 @@ vine-axum is module which helps with integration of axum to vine framework
 [dependencies]
 log = { version = "0.4.22" }
 dashmap = { version = "6.0.1" }
-vine-core = { path = "../vine-core" }
+vine-core = { path = "../vine-core", version = "0.1.4-dev.11" }
 
 axum = "0.8.1"
 tokio = { version = "1.39.2", features = ["net"] }
