@@ -17,12 +17,11 @@ default = [
 ]
 
 [dependencies]
-vine-core = { version = "0.1.4", optional = true }
-vine-macros = { version = "0.1.4", optional = true }
-
-vine-axum = { version = "0.1.4", optional = true }
-vine-axum-macros = { version = "0.1.4", optional = true }
+vine-core = { path = "../vine-core", optional = true }
+vine-macros = { path = "../vine-macros", optional = true }
+vine-axum = { path = "../vine-axum", optional = true }
+vine-axum-macros = { path = "../vine-axum-macros", optional = true }
 
 linkme = "0.3.28"
 async-trait = "0.1.82"
-config = "0.14.0"
+config = "0.15.8"
