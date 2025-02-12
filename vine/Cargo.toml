@@ -1,9 +1,9 @@
 [package]
 name = "vine"
-version = "0.1.4"
 edition = "2021"
-
-license = "Apache-2.0"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
 description = """
 Vine is rust framework inspired by Spring Boot
 """

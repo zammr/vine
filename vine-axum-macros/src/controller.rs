@@ -20,7 +20,7 @@ pub fn generate_init_fn_for_controller(_attr: TokenStream, input: ItemImpl) -> T
 
     let ty_name = quote!(#self_ty).to_string();
     let controller = LitStr::new(ty_name.as_str(), Span::call_site());
-    let setup_ident = Ident::new(format!("SETUP_INIT_FN_{}_CONTROLLER", ty_name).as_str(), Span::call_site());
+    let setup_ident = Ident::new(format!("SETUP_INIT_FN_{}_CONTROLLER", ty_name.to_uppercase()).as_str(), Span::call_site());
     let extended = quote!(
         #[vine::distributed_slice(#vine_setup)]
         pub static #setup_ident: fn(&#vine_context) -> Result<(), #vine_error> = |ctx| {
