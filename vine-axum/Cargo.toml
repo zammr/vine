@@ -9,11 +9,11 @@ vine-axum is module which helps with integration of axum to vine framework
 """
 
 [dependencies]
-log = { version = "0.4.22" }
-dashmap = { version = "6.0.1" }
-vine-core = { path = "../vine-core", version = "0.1.4-dev.11" }
+log = { version = "0.4.27" }
+dashmap = { version = "6.1.0" }
+vine-core = { path = "../vine-core", version = "0.1.4-dev.12" }
 
-axum = "0.8.1"
-tokio = { version = "1.39.2", features = ["net"] }
-async-trait = { version = "0.1.81" }
-linkme = { version = "0.3.27"}
+axum = "0.8.3"
+tokio = { version = "1.44.1", features = ["net"] }
+async-trait = { version = "0.1.88" }
+linkme = { version = "0.3.32"}

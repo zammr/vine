@@ -9,15 +9,15 @@ Vine Core implement core concepts of vine framework.
 """
 
 [dependencies]
-log = { version = "0.4.22" }
-dashmap = { version = "6.0.1" }
+log = { version = "0.4.27" }
+dashmap = { version = "6.1.0" }
 
-tokio = { version = "1.40.0", features = ["full"] }
+tokio = { version = "1.44.1", features = ["full"] }
 
 lazy_static = { version = "1.5.0" }
-async-trait = { version = "0.1.81" }
-linkme = { version = "0.3.27"}
+async-trait = { version = "0.1.88" }
+linkme = { version = "0.3.32"}
 
 log4rs = { version = "1.3.0", features = ["console_writer"]}
-config = { version = "0.15.8", features = ["yaml"] }
-regex = { version = "1.10.6" }
+config = { version = "0.15.11", features = ["yaml"] }
+regex = { version = "1.11.1" }

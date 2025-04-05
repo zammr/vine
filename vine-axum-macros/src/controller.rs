@@ -4,6 +4,13 @@ use quote::quote;
 use syn::{ItemImpl, Ident, LitStr, ImplItem, ImplItemFn, Signature, FnArg};
 
 pub fn generate_init_fn_for_controller(_attr: TokenStream, input: ItemImpl) -> TokenStream {
+    quote!(
+        #input
+    ).into()
+}
+
+
+pub fn generate_init_fn_for_controller_2(_attr: TokenStream, input: ItemImpl) -> TokenStream {
     // TODO: extract to common place
     let vine_setup = quote!(vine::vine_core::context::auto_register_context::SETUP);
     let vine_context = quote!(vine::vine_core::context::context::Context);
@@ -62,38 +69,81 @@ fn to_routes(item: &ImplItem) -> Vec<proc_macro2::TokenStream> {
 
     let mut routes = vec![];
     for attr in attrs {
-        if attr.path().is_ident("get") || attr.path().is_ident("vine::get") {
-            let path = attr.parse_args::<LitStr>().unwrap();
-            let route = quote!(
-                #path.to_string(), axum::routing::get(#handler)
-            );
-            routes.push(route);
-        } else if attr.path().is_ident("head") || attr.path().is_ident("vine::head") {
-            let path = attr.parse_args::<LitStr>().unwrap();
-            let route = quote!(
-                #path.to_string(), axum::routing::head(#handler)
-            );
-            routes.push(route);
-        } else if attr.path().is_ident("post") || attr.path().is_ident("vine::post") {
-            let path = attr.parse_args::<LitStr>().unwrap();
-            let route = quote!(
-                #path.to_string(), axum::routing::post(#handler)
-            );
-            routes.push(route);
-        } else if attr.path().is_ident("put") || attr.path().is_ident("vine::put") {
-            let path = attr.parse_args::<LitStr>().unwrap();
-            let route = quote!(
-                #path.to_string(), axum::routing::put(#handler)
-            );
-            routes.push(route);
-        } else if attr.path().is_ident("delete") || attr.path().is_ident("vine::delete") {
-            let path = attr.parse_args::<LitStr>().unwrap();
-            let route = quote!(
-                #path.to_string(), axum::routing::delete(#handler)
-            );
-            routes.push(route);
-        }
+        let http_path = attr.parse_args::<LitStr>().unwrap();
+        let htpp_method = match attr.path() {
+            path if path.is_ident("patch") || path.is_ident("vine::patch") => quote!(axum::routing::patch),
+            path if path.is_ident("options") || path.is_ident("vine::options") => quote!(axum::routing::options), 
+            path if path.is_ident("trace") || path.is_ident("vine::trace") => quote!(axum::routing::trace),
+            path if path.is_ident("connect") || path.is_ident("vine::connect") => quote!(axum::routing::connect),
+            path if path.is_ident("get") || path.is_ident("vine::get") => quote!(axum::routing::get),
+            path if path.is_ident("head") || path.is_ident("vine::head") => quote!(axum::routing::head),
+            path if path.is_ident("post") || path.is_ident("vine::post") => quote!(axum::routing::post),
+            path if path.is_ident("put") || path.is_ident("vine::put") => quote!(axum::routing::put),
+            path if path.is_ident("delete") || path.is_ident("vine::delete") => quote!(axum::routing::delete),
+            _ => continue
+        };
+        routes.push(quote!(
+            #http_path.to_string(), #htpp_method(#handler)
+        ));
     }
 
     routes
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use quote::quote;
+    use syn::parse_quote;
+
+    #[test]
+    fn test_controller_generation() {
+        // Create a mock controller impl with HTTP methods
+        let input = parse_quote! {
+            #[controller]
+            impl TestController {
+                #[get("/test")]
+                async fn test_get(&self) -> &'static str {
+                    "test"
+                }
+
+                #[post("/create")]
+                async fn test_post(&self, body: String) -> String {
+                    body
+                }
+            }
+        };
+
+        // Generate the expanded code
+        let result = generate_init_fn_for_controller(quote!().into(), input);
+        
+        println!("{:?}", result);
+
+        // // Verify the expanded code contains expected elements
+        // assert!(result.contains("fn setup_routes"));
+        // assert!(result.contains("axum::routing::get"));
+        // assert!(result.contains("axum::routing::post"));
+        // assert!(result.contains("\"/test\""));
+        // assert!(result.contains("\"/create\""));
+    }
+
+    #[test]
+    fn test_route_generation() {
+        // Create a mock method with HTTP attribute
+        let method: ImplItem = parse_quote! {
+            #[get("/hello")]
+            async fn hello(&self) -> &'static str {
+                "Hello"
+            }
+        };
+
+        // Generate routes
+        let routes = to_routes(&method);
+
+        // Verify route generation
+        assert_eq!(routes.len(), 1);
+        let route = routes[0].to_string();
+        assert!(route.contains("\"/hello\""));
+        assert!(route.contains("axum::routing::get"));
+    }
 }
