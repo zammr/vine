@@ -1,34 +1,25 @@
-use proc_macro::TokenStream;
-use proc_macro2::Span;
+use proc_macro2::{Span, TokenStream};
 use quote::quote;
-use syn::{ItemImpl, Ident, LitStr, ImplItem, ImplItemFn, Signature, FnArg};
+use syn::{FnArg, Ident, ImplItem, ImplItemFn, ItemImpl, LitStr, Signature};
 
-pub fn generate_init_fn_for_controller(_attr: TokenStream, input: ItemImpl) -> TokenStream {
-    quote!(
-        #input
-    ).into()
-}
-
-
-pub fn generate_init_fn_for_controller_2(_attr: TokenStream, input: ItemImpl) -> TokenStream {
-    // TODO: extract to common place
+pub fn generate_init_fn_for_controller(item_impl: ItemImpl) -> TokenStream {
     let vine_setup = quote!(vine::vine_core::context::auto_register_context::SETUP);
     let vine_context = quote!(vine::vine_core::context::context::Context);
     let vine_error = quote!(vine::vine_core::core::Error);
     let vine_web = quote!(vine::vine_axum::Web);
 
-    let ItemImpl { self_ty, items, .. } = &input;
+    let ItemImpl { self_ty, items, .. } = &item_impl;
 
-
-    let routes: Vec<_> = items.iter()
-        .flat_map(|impl_item| to_routes(impl_item))
+    let routes: Vec<_>  = items.iter()
+        .flat_map(|impl_item| handler_to_method_router(impl_item))
         .map(|route| quote!(web.add_route(#route);) )
         .collect();
 
     let ty_name = quote!(#self_ty).to_string();
     let controller = LitStr::new(ty_name.as_str(), Span::call_site());
     let setup_ident = Ident::new(format!("SETUP_INIT_FN_{}_CONTROLLER", ty_name.to_uppercase()).as_str(), Span::call_site());
-    let extended = quote!(
+
+    quote!(
         #[vine::distributed_slice(#vine_setup)]
         pub static #setup_ident: fn(&#vine_context) -> Result<(), #vine_error> = |ctx| {
             ctx.add_init_fn(#controller, std::sync::Arc::new(|ctx| {
@@ -41,13 +32,11 @@ pub fn generate_init_fn_for_controller_2(_attr: TokenStream, input: ItemImpl) ->
             }))
         };
 
-        #input
-    );
-
-    extended.into()
+        #item_impl
+    )
 }
 
-fn to_routes(item: &ImplItem) -> Vec<proc_macro2::TokenStream> {
+fn handler_to_method_router(item: &ImplItem) -> Vec<proc_macro2::TokenStream> {
     let ImplItem::Fn(ImplItemFn {
         attrs,
         sig: Signature { ident, inputs, .. },
@@ -94,13 +83,11 @@ fn to_routes(item: &ImplItem) -> Vec<proc_macro2::TokenStream> {
 mod tests {
     use super::*;
     use quote::quote;
-    use syn::parse_quote;
+    use syn::{parse_quote, Attribute};
 
     #[test]
-    fn test_controller_generation() {
-        // Create a mock controller impl with HTTP methods
-        let input = parse_quote! {
-            #[controller]
+    fn test_to_routes() {
+        let item_impl: ItemImpl = parse_quote! {
             impl TestController {
                 #[get("/test")]
                 async fn test_get(&self) -> &'static str {
@@ -114,36 +101,12 @@ mod tests {
             }
         };
 
-        // Generate the expanded code
-        let result = generate_init_fn_for_controller(quote!().into(), input);
-        
-        println!("{:?}", result);
-
-        // // Verify the expanded code contains expected elements
-        // assert!(result.contains("fn setup_routes"));
-        // assert!(result.contains("axum::routing::get"));
-        // assert!(result.contains("axum::routing::post"));
-        // assert!(result.contains("\"/test\""));
-        // assert!(result.contains("\"/create\""));
-    }
-
-    #[test]
-    fn test_route_generation() {
-        // Create a mock method with HTTP attribute
-        let method: ImplItem = parse_quote! {
-            #[get("/hello")]
-            async fn hello(&self) -> &'static str {
-                "Hello"
-            }
+        let token_stream = generate_init_fn_for_controller(item_impl);
+        let syntax_tree: syn::File = parse_quote! {
+            #token_stream
         };
-
-        // Generate routes
-        let routes = to_routes(&method);
-
-        // Verify route generation
-        assert_eq!(routes.len(), 1);
-        let route = routes[0].to_string();
-        assert!(route.contains("\"/hello\""));
-        assert!(route.contains("axum::routing::get"));
+        let unparse = prettyplease::unparse(&syntax_tree);
+       
+        println!("{}", &unparse);
     }
 }

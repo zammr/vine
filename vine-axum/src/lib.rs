@@ -15,11 +15,11 @@ use vine_core::core::ty::Type;
 pub struct Web {
     host: String,
     port: String,
-    routes: DashMap<String, Vec<MethodRouter>>,
+    routes: DashMap<String, Vec<MethodRouter<()>>>,
 }
 
 impl Web {
-    pub fn add_route(&self, path: String, method_router: MethodRouter) {
+    pub fn add_route(&self, path: String, method_router: MethodRouter<()>) {
         if let Some(mut r) = self.routes.get_mut(&path) {
             r.push(method_router);
         } else {
