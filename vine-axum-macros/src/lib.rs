@@ -1,7 +1,7 @@
 mod controller;
 
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, parse_quote, Attribute, Item};
+use syn::Item;
 use crate::controller::generate_init_fn_for_controller;
 
 /// Generates a controller implementation with initialization functions for web routing.
@@ -24,7 +24,7 @@ use crate::controller::generate_init_fn_for_controller;
 /// ```
 #[proc_macro_attribute]
 pub fn controller(_attr: TokenStream, input: TokenStream) -> TokenStream {
-    let item = parse_macro_input!(input as Item);
+    let item = syn::parse_macro_input!(input as Item);
     match item {
         Item::Impl(item_impl) => generate_init_fn_for_controller(item_impl).into(),
         _ => panic!("unsupported...")

@@ -82,8 +82,7 @@ fn handler_to_method_router(item: &ImplItem) -> Vec<proc_macro2::TokenStream> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use quote::quote;
-    use syn::{parse_quote, Attribute};
+    use syn::{parse_quote, ItemImpl};
 
     #[test]
     fn test_to_routes() {
