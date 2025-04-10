@@ -10,7 +10,7 @@ members = [
 default-members = ["vine", "vine-*"]
 
 [workspace.package]
-version = "0.1.5-dev.1"
+version = "0.1.5-dev.2"
 license = "Apache-2.0"
 authors = ["zammr"]
 repository = "https://github.com/zammr/vine"
