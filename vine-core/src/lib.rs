@@ -1,4 +1,4 @@
-use log::{trace};
+use log::trace;
 
 use crate::app::App;
 use crate::config::get_config_context;
