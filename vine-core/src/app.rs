@@ -1,7 +1,6 @@
 use std::sync::Arc;
-use std::time::{Instant};
+use std::time::Instant;
 
-use config::Config;
 use log::{debug, info, warn};
 
 use crate::context::context::Context;
@@ -31,39 +30,31 @@ impl App {
 
     pub async fn exec(&self) -> Result<(), Error> {
         let timer = Instant::now();
+        
         info!("starting application");
         self.context.init_contexts()?;
 
-        let config = self.context.get_bean::<Config>("config")?;
         let mut runners = self.context.get_beans::<dyn Runner + Send + Sync>()?;
-
         debug!("starting {} runners", runners.len());
-        let mut runner_results = Vec::new();
+
+        let mut handles = Vec::new();
         while let Some(r) = runners.pop() {
-            let config = config.clone();
             let runner = r.clone();
-            runner_results.push(tokio::task::spawn_blocking(move || {
-                let name = runner.name().to_string();
-
-                debug!("create Runtime for runner {}", &name);
-                let runtime = runner.runtime(config).unwrap(); // TODO: fix unwrap
-
-                debug!("start runner {} within runtime", &name);
-                let join_handle = runtime.spawn(async move { runner.run().await });
-                (name, runtime, join_handle)
+            let name = runner.name().to_string();
+            
+            debug!("starting runner {}", r.name());
+            handles.push(tokio::spawn(async move {
+                let result = runner.run().await;
+                (name, result)
             }));
             debug!("runner {} has been started in {} micros", r.name(), timer.elapsed().as_micros());
         }
         info!("started in {} micros", timer.elapsed().as_micros());
 
         let mut errors = Vec::new();
-        while let Some(runner_result) = runner_results.pop() {
-            let (name, _runtime, join_handle) = runner_result.await.map_err(|_join_error| {
+        while let Some(runner_result) = handles.pop() {
+            let (name, result) = runner_result.await.map_err(|_| {
                Error::from("failed to start runner")
-            })?;
-
-            let result = join_handle.await.map_err(|_join_error| {
-                Error::from(format!("failed to execute runner {}", &name))
             })?;
 
             if let Err(error) = result {
