@@ -31,9 +31,10 @@ impl Web {
 #[async_trait]
 impl vine_core::core::runner::Runner for Web {
     async fn run(&self) -> Result<(), Error> {
+
         trace!("register endpoints");
         let router = {
-            let mut router = Router::new();
+            let mut router = Router::new().without_v07_checks();
             // register endpoints
             for route in &self.routes {
                 let method_router = route.value().clone().into_iter().reduce(|acc, h| acc.merge(h));
