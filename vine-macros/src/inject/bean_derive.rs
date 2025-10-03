@@ -4,6 +4,7 @@ use quote::quote;
 use syn::{Data, DataStruct, DeriveInput, Ident, LitStr, parse_macro_input, parse_quote};
 
 use crate::inject::bean_field::BeanField;
+use crate::inject::generate_value_based_on_config;
 
 pub fn generate_setup_fn_for_bean_derive(input: TokenStream) -> TokenStream {
     let DeriveInput {
@@ -16,10 +17,13 @@ pub fn generate_setup_fn_for_bean_derive(input: TokenStream) -> TokenStream {
         BeanField::Bean(field, ty, name) => quote!(#field: ctx.get_bean::<#ty>(#name)?,),
         BeanField::PrimaryBean(field, ty) => quote!(#field: ctx.get_primary_bean::<#ty>()?,),
         BeanField::Beans(field, ty) => quote!(#field: ctx.get_beans::<#ty>()?,),
-        BeanField::Value(field, _ty, value) => quote!(#field: {
-            let config = ctx.get_bean::<dyn vine::vine_core::config::PropertyResolver + Send + Sync>("config")?;
-            config.compute_template_value(#value)?
-        },),
+        BeanField::Value(field, ty, value) => {
+            let compute_call = generate_value_based_on_config(&ty, &value);
+            quote!(#field: {
+                let config = ctx.get_bean::<dyn vine::vine_core::config::PropertyResolver + Send + Sync>("config")?;
+                #compute_call
+            },)
+        },
     }).collect();
 
     let setup_ident = format!("SETUP_{}", &ident.to_string().to_uppercase());
@@ -45,3 +49,4 @@ pub fn generate_setup_fn_for_bean_derive(input: TokenStream) -> TokenStream {
     };
     output.into()
 }
+

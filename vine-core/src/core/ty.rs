@@ -10,17 +10,41 @@ use log::{trace, warn};
 
 use crate::core::{DynBean, Error};
 
+/// A runtime type descriptor that enables dynamic type operations and trait object downcasting.
+/// 
+/// The Type system provides:
+/// - Runtime type identification and registration
+/// - Dynamic downcasting to concrete types and trait objects
+/// - Thread-safe type operations through DashMap
+/// 
+/// Types are registered automatically when first accessed via `Type::of::<T>()`.
 pub struct Type {
+    /// Unique identifier for this type
     id: TypeId,
+    /// Human-readable type name
     name: &'static str,
+    /// Registry of downcast functions for converting to different types/traits
     downcast_fns: Arc<DashMap<TypeId, Arc<dyn Any + Send + Sync>>>
 }
 
+// Global registry of all registered types, indexed by TypeId for fast lookup
 lazy_static!(
     static ref TYPES: Arc<DashMap<TypeId, Arc<Type>>> = Arc::new(DashMap::new());
 );
 
 impl Type {
+    /// Gets or creates a Type descriptor for the given type T.
+    /// 
+    /// This method is thread-safe and will only create one Type instance per type.
+    /// The type is automatically registered in the global TYPES registry.
+    ///
+    /// # Examples
+    /// ```
+    /// use vine_core::core::ty::Type;
+    ///
+    /// let string_type = Type::of::<String>();
+    /// let int_type = Type::of::<i32>();
+    /// ```
     pub fn of<T: 'static>() -> Arc<Type> {
         let type_id = TypeId::of::<T>();
         let ref_mut = TYPES.entry(type_id).or_insert_with(|| {
@@ -37,19 +61,41 @@ impl Type {
         ref_mut.clone()
     }
 
+    /// Returns the human-readable name of this type.
     pub fn name(&self) -> &str {
         self.name
     }
 
+    /// Returns the unique TypeId for this type.
     pub fn id(&self) -> &TypeId {
         &self.id
     }
 
+    /// Checks if this type can be downcast to the type identified by the given TypeId.
+    /// 
+    /// Returns true if a downcast function has been registered for the target type.
+    /// This is used to determine type compatibility at runtime.
     pub fn assignable(&self, type_id: &TypeId) -> bool {
         self.downcast_fns.contains_key(type_id)
     }
 
 
+    /// Registers a downcast function for converting DynBean instances to type T.
+    /// 
+    /// This enables runtime conversion from the current type to trait objects or other types.
+    /// If a downcast function already exists for type T, it will be replaced with a warning.
+    /// 
+    /// # Arguments
+    /// * `downcast_fn` - Function that attempts to downcast a DynBean to Arc<T>
+    ///
+    /// # Examples
+    /// ```ignore
+    /// use vine_core::core::ty::Type;
+    /// use std::sync::Arc;
+    ///
+    /// let ty = Type::of::<MyStruct>();
+    /// ty.add_downcast::<dyn MyTrait>(|bean| Ok(Arc::downcast::<MyStruct>(bean)?));
+    /// ```
     pub fn add_downcast<T: ?Sized + 'static>(&self, downcast_fn: fn(DynBean) -> Result<Arc<T>, DynBean>) {
         let alias_id = TypeId::of::<T>();
         trace!("register {} downcast fn for {}", self, type_name::<T>());
@@ -58,15 +104,37 @@ impl Type {
         }
     }
 
+    /// Attempts to downcast a DynBean to the specified type T.
+    /// 
+    /// This method looks up the appropriate downcast function and applies it to convert
+    /// the DynBean to the requested type. The target type must have been registered
+    /// via `add_downcast` on the source type.
+    /// 
+    /// # Arguments
+    /// * `dyn_bean` - The dynamic bean to downcast
+    ///
+    /// # Returns
+    /// * `Ok(Arc<T>)` - Successfully downcast bean
+    /// * `Err(Error)` - If the type is not registered or downcast fails
+    ///
+    /// # Examples
+    /// ```ignore
+    /// use vine_core::core::ty::Type;
+    /// use vine_core::core::bean_def::DynBean;
+    /// use std::sync::Arc;
+    ///
+    /// let bean: DynBean = Arc::new(MyStruct::new());
+    /// let result: Arc<MyStruct> = Type::downcast(bean)?;
+    /// ```
     pub fn downcast<T: ?Sized + 'static>(dyn_bean: DynBean) -> Result<Arc<T>, Error> {
         let type_id = dyn_bean.as_ref().type_id();
         let Some(type_ref) = TYPES.get(&type_id) else {
-            return Err(Error::from("{:?} is not registered in vine Type System"))
+            return Err(Error::from(format!("Type {:?} is not registered in vine Type System", type_id)))
         };
 
         let alias_id = TypeId::of::<T>();
         let Some(downcast_fn) = type_ref.value().downcast_fns.get(&alias_id) else {
-            return Err(Error::from("TODO 111"))
+            return Err(Error::from(format!("No downcast function registered for {} -> {}", type_ref.value().name(), type_name::<T>())))
         };
 
         let arc = downcast_fn.clone()
@@ -74,7 +142,7 @@ impl Type {
             .unwrap();
 
         let Ok(bean) = (arc.as_ref())(dyn_bean) else {
-            return Err(Error::from("TODO 2"))
+            return Err(Error::from(format!("Failed to downcast {} to {}", type_ref.value().name(), type_name::<T>())))
         };
 
         Ok(bean)

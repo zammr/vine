@@ -4,6 +4,7 @@ use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::{FnArg, GenericArgument, ItemFn, LitStr, parse_macro_input, parse_quote, PathArguments, PatType, ReturnType, Signature, Type};
 use crate::inject::bean_field::BeanField;
+use crate::inject::generate_value_based_on_config;
 
 pub fn generate_setup_fn_for_bean(_attr: TokenStream, input: TokenStream) -> TokenStream {
     let ItemFn {
@@ -22,10 +23,13 @@ pub fn generate_setup_fn_for_bean(_attr: TokenStream, input: TokenStream) -> Tok
         BeanField::Bean(_, ty, name) => quote!(ctx.get_bean::<#ty>(#name)?,),
         BeanField::PrimaryBean(_, ty) => quote!(ctx.get_primary_bean::<#ty>()?,),
         BeanField::Beans(_, ty) => quote!(ctx.get_beans::<#ty>()?,),
-        BeanField::Value(_, _ty, value) => quote!({
-            let config = ctx.get_bean::<dyn vine::vine_core::config::PropertyResolver + Send + Sync>("config")?;
-            config.compute_template_value(#value)?
-        },),
+        BeanField::Value(_, ty, value) => {
+            let compute_call = generate_value_based_on_config(&ty, &value);
+            quote!({
+                let config = ctx.get_bean::<dyn vine::vine_core::config::PropertyResolver + Send + Sync>("config")?;
+                #compute_call
+            },)
+        },
     }).collect();
 
     let fn_name_str = ident.to_string();

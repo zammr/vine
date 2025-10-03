@@ -1,3 +1,4 @@
+use PathArguments::AngleBracketed;
 use syn::{AngleBracketedGenericArguments, Field, GenericArgument, Ident, LitStr, PathArguments, PathSegment, Result, Type};
 use syn::parse::{Parse, ParseStream};
 
@@ -9,9 +10,19 @@ pub enum BeanField {
 }
 
 fn get_inner_type(ty: &Type) -> (&Ident, &Type) {
-    let Type::Path(type_path) = ty else { panic!("?????") };
-    let Some(PathSegment { ident, arguments: PathArguments::AngleBracketed( AngleBracketedGenericArguments { args, .. }) }) = type_path.path.segments.first() else { panic!("?????") };
-    let Some(GenericArgument::Type(inner_type)) = args.first() else { panic!("TODO") };
+    let Type::Path(type_path) = ty else {
+        panic!("Expected a type path")
+    };
+
+    let Some(PathSegment {
+                 ident, arguments: AngleBracketed( AngleBracketedGenericArguments { args, .. })
+             }) = type_path.path.segments.first() else {
+        panic!("Expected a type with angle bracketed generic arguments")
+    };
+
+    let Some(GenericArgument::Type(inner_type)) = args.first() else {
+        panic!("Expected at least one generic type argument")
+    };
 
     (ident, inner_type)
 }
@@ -20,7 +31,7 @@ impl Parse for BeanField {
     fn parse(input: ParseStream) -> Result<Self> {
         let Field {
             ident: Some(ident), attrs, ty,
-        .. } = input.call(Field::parse_named)? else { panic!("failed to parse BeanField") };
+        .. } = input.call(Field::parse_named)? else { panic!("BeanField must be a named field with an identifier") };
 
         if let Some(attr) = attrs.first() {
             if attr.path().is_ident("qualifier") {
@@ -41,6 +52,6 @@ impl Parse for BeanField {
             return Ok(BeanField::PrimaryBean(ident, ty.clone()));
         }
 
-        todo!()
+        panic!(r#"Unsupported field type. Expected variants are Vec<Arc<T>>, Arc<T>, or a field with #[qualifier] or #[value] attribute"#)
     }
 }

@@ -13,7 +13,10 @@ pub mod logger;
 pub mod config;
 
 pub fn create_app() -> Result<App, Error> {
-    let context = get_config_context()?;
+    let context = get_config_context(vec![
+        "app.yaml".to_string(),
+        "app.yml".to_string(),
+    ])?;
     init_logger(&context)?;
 
     trace!("setup - create default App instance");
